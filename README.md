@@ -1,8 +1,8 @@
 # DP-1 Validator
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/display-protocol/dp1-validator/test-validator.yaml?branch=main&label=build%20status&logo=github)](https://github.com/display-protocol/dp1-validator/actions/workflows/test-validator.yaml)
-[![Linter](https://img.shields.io/github/actions/workflow/status/display-protocol/dp1-validator/lint-validator.yaml?branch=main&label=linter&logo=github)](https://github.com/display-protocol/dp1-validator/actions/workflows/lint-validator.yaml)
-[![Code Coverage](https://img.shields.io/codecov/c/github/display-protocol/dp1-validator/main?label=code%20coverage&logo=codecov)](https://codecov.io/gh/feral-file/dp-1)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/display-protocol/dp1-validator/test.yaml?branch=main&label=build%20status&logo=github)](https://github.com/display-protocol/dp1-validator/actions/workflows/test.yaml)
+[![Linter](https://img.shields.io/github/actions/workflow/status/display-protocol/dp1-validator/lint.yaml?branch=main&label=linter&logo=github)](https://github.com/display-protocol/dp1-validator/actions/workflows/lint.yaml)
+[![Code Coverage](https://img.shields.io/codecov/c/github/display-protocol/dp1-validator/main?label=code%20coverage&logo=codecov)](https://codecov.io/gh/display-protocol/dp1-validator)
 
 A command-line validator for DP-1 playlists and capsules that can verify Ed25519 signatures and SHA256 asset integrity according to the DP-1 specification.
 
