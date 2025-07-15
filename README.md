@@ -6,7 +6,7 @@
 
 A command-line validator for DP-1 playlists and capsules that can verify Ed25519 signatures and SHA256 asset integrity according to the DP-1 specification.
 
-## Features
+## 🚀 Features
 
 - **Playlist Validation**: Verify Ed25519 signatures on DP-1 playlists
 - **Capsule Validation**: Extract and verify SHA256 asset integrity in DP-1 capsules (.dp1c files)
@@ -15,7 +15,7 @@ A command-line validator for DP-1 playlists and capsules that can verify Ed25519
 - **Asset Verification**: Compare extracted files against expected hashes from playlist or CLI
 - **Structural Validation**: Ensure compliance with DP-1 specification
 
-## Installation
+## 📦 Installation
 
 ```bash
 # Clone and build
@@ -24,7 +24,7 @@ go mod tidy
 go build -o dp1-validator .
 ```
 
-## Usage
+## 📡 Usage
 
 ### Playlist Validation
 
@@ -82,7 +82,7 @@ Validate a DP-1 capsule (.dp1c file) by extracting it and verifying asset integr
 - Must contain `playlist.json` in the root
 - Must contain `assets/` directory with artwork files
 
-## Library Usage
+## 📡 Library Usage
 
 The validator can also be used as a Go library:
 
@@ -111,7 +111,7 @@ func main() {
 }
 ```
 
-## Components
+## 🗄️ Components
 
 ### Core Files
 
@@ -189,7 +189,7 @@ The validator provides detailed error messages for common issues:
 - **Hash mismatches**: Missing files, extra files, corrupted content
 - **Network errors**: Failed URL fetches, timeout issues
 
-## Future Enhancements
+## ⬆️ Future Enhancements
 
 - **Chrome DevTools Integration**: First-frame capture and verification
 - **Batch Validation**: Process multiple playlists/capsules
@@ -197,19 +197,43 @@ The validator provides detailed error messages for common issues:
 - **Performance Optimization**: Parallel hash computation
 - **Engine Layer Support**: Validation of engine-specific capsule layers
 
-## Dependencies
+## 📦 Dependencies
 
 - `github.com/spf13/cobra`: CLI framework
 - `github.com/klauspost/compress`: Zstandard compression for capsule extraction
 - `golang.org/x/crypto`: Ed25519 cryptography
 - Standard Go libraries for HTTP, JSON, tar, and file operations
 
-## Contributing
+## 🤝 Contributing
 
 1. Ensure all tests pass: `go test ./...`
 2. Follow Go conventions and add appropriate documentation
 3. Update this README for new features
 
-## License
+## 📄 License
 
-This project follows the DP-1 specification governance model.
+MIT License
+
+Copyright (c) 2025 Feral File / Display Protocol Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+**Built with ❤️ by Feral File for the DP-1 ecosystem using modern web standards.**
