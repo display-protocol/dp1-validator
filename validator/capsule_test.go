@@ -132,16 +132,19 @@ func TestExtractCapsule(t *testing.T) {
 	validPlaylist := map[string]any{
 		"dpVersion": "1.0.0",
 		"id":        "385f79b6-a45f-4c1c-8080-e93a192adccc", // Use valid UUID
+		"slug":      "test-playlist",
 		"created":   "2025-01-01T00:00:00Z",
 		"title":     "Test Playlist",
 		"items": []any{
 			map[string]any{
-				"id":     "285f79b6-a45f-4c1c-8080-e93a192adccc", // Use valid UUID
-				"source": "https://example.com/test.html",
+				"id":       "285f79b6-a45f-4c1c-8080-e93a192adccc", // Use valid UUID
+				"source":   "https://example.com/test.html",
+				"duration": 300,
+				"license":  "open",
 				"repro": map[string]any{
 					"assetsSHA256": []any{
-						"abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-						"fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321",
+						"0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+						"0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321",
 					},
 				},
 			},

@@ -123,6 +123,7 @@ func validatePlaylist(cmd *cobra.Command, args []string) error {
 
 	// Get signable content (playlist without signature)
 	fmt.Printf("\n🔒 Preparing content for verification...\n")
+	signature := *p.Signature
 	signableContent, err := playlist.CanonicalizePlaylist(p, true)
 	if err != nil {
 		return fmt.Errorf("failed to prepare signable content: %w", err)
@@ -131,7 +132,7 @@ func validatePlaylist(cmd *cobra.Command, args []string) error {
 
 	// Verify signature
 	fmt.Printf("\n✍️  Verifying Ed25519 signature...\n")
-	if err := validator.VerifySignature(pubkeyHex, signableContent, *p.Signature); err != nil {
+	if err := validator.VerifySignature(pubkeyHex, signableContent, signature); err != nil {
 		return fmt.Errorf("signature verification failed: %w", err)
 	}
 

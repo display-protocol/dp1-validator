@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
@@ -18,49 +20,142 @@ import (
 // Global validator instance
 var validate *validator.Validate
 
+// Custom validator
+var marginValidator = func(fl validator.FieldLevel) bool {
+	value := fl.Field().String()
+	return regexp.MustCompile(`^[0-9]+(\.[0-9]+)?(px|%|vw|vh)$`).MatchString(value)
+}
+var backgroundValidator = func(fl validator.FieldLevel) bool {
+	value := fl.Field().String()
+	return regexp.MustCompile(`^(#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})|transparent)$`).MatchString(value)
+}
+
 func init() {
 	validate = validator.New()
+	_ = validate.RegisterValidation("margin", marginValidator)
+	_ = validate.RegisterValidation("background", backgroundValidator)
 }
 
 // PlaylistItem represents a single item in a DP-1 playlist
 type PlaylistItem struct {
-	ID         string           `json:"id" validate:"required,uuid4"`
-	Slug       string           `json:"slug,omitempty" validate:"omitempty,max=100"`
-	Title      string           `json:"title,omitempty" validate:"omitempty,max=256"`
-	Source     string           `json:"source" validate:"required,url"`
-	Duration   int              `json:"duration,omitempty" validate:"omitempty,min=0"`
-	License    string           `json:"license,omitempty" validate:"omitempty,oneof=open token subscription"`
-	Ref        string           `json:"ref,omitempty" validate:"omitempty,url"`
-	Override   map[string]any   `json:"override,omitempty"`
-	Display    map[string]any   `json:"display,omitempty"`
-	Repro      *ReproBlock      `json:"repro,omitempty" validate:"omitempty"`
-	Provenance *ProvenanceBlock `json:"provenance,omitempty" validate:"omitempty"`
+	ID         string         `json:"id" validate:"required,uuid4"`
+	Title      string         `json:"title,omitempty" validate:"omitempty,max=256"`
+	Source     string         `json:"source" validate:"required,url"`
+	Duration   int            `json:"duration,omitempty" validate:"required,min=1"`
+	License    string         `json:"license,omitempty" validate:"required,oneof=open token subscription"`
+	Ref        string         `json:"ref,omitempty" validate:"omitempty,url"`
+	Override   map[string]any `json:"override,omitempty"`
+	Display    *Display       `json:"display,omitempty" validate:"omitempty"`
+	Repro      *ReproBlock    `json:"repro,omitempty" validate:"omitempty"`
+	Provenance *Provenance    `json:"provenance,omitempty" validate:"omitempty"`
+}
+
+// Mouse represents the mouse interaction
+type Mouse struct {
+	Click  bool `json:"click" validate:"omitempty"`
+	Drag   bool `json:"drag" validate:"omitempty"`
+	Scroll bool `json:"scroll" validate:"omitempty"`
+	Hover  bool `json:"hover" validate:"omitempty"`
+}
+
+// Interaction represents the interaction of a playlist item
+type Interaction struct {
+	Keyboard []string `json:"keyboard" validate:"omitempty"`
+	Mouse    *Mouse   `json:"mouse" validate:"omitempty"`
+}
+
+type Margin string
+
+// UnmarshalJSON implements custom JSON unmarshaling for MarginValue
+func (m *Margin) UnmarshalJSON(data []byte) error {
+	// First try to unmarshal as string
+	var str string
+	if err := json.Unmarshal(data, &str); err == nil {
+		*m = Margin(str)
+		return nil
+	}
+
+	// If string fails, try to unmarshal as number
+	var num float64
+	if err := json.Unmarshal(data, &num); err != nil {
+		return fmt.Errorf("margin must be a string or number: %w", err)
+	}
+
+	// Convert number to string with "px" units, rounding to nearest integer
+	*m = Margin(fmt.Sprintf("%.0fpx", math.Round(num)))
+	return nil
+}
+
+// String returns the string representation of the margin value
+func (m Margin) String() string {
+	return string(m)
+}
+
+// Display represents the display properties of a playlist item
+type Display struct {
+	Scaling     string       `json:"scaling" validate:"omitempty,oneof=fit fill stretch auto"`
+	Margin      Margin       `json:"margin" validate:"omitempty,margin"`
+	Background  string       `json:"background" validate:"omitempty,background"`
+	AutoPlay    bool         `json:"autoPlay" validate:"omitempty"`
+	Loop        bool         `json:"loop" validate:"omitempty"`
+	Interaction *Interaction `json:"interaction,omitempty"`
+}
+
+// FrameHash represents the hash of a frame
+type FrameHash struct {
+	SHA256 string `json:"sha256" validate:"required,len=66,startswith=0x,hexadecimal"`
+	PHash  string `json:"phash" validate:"omitempty,len=18,startswith=0x,hexadecimal"`
 }
 
 // ReproBlock represents reproduction verification data
 type ReproBlock struct {
 	EngineVersion map[string]string `json:"engineVersion,omitempty"`
 	Seed          string            `json:"seed,omitempty" validate:"omitempty,hexadecimal"`
-	AssetsSHA256  []string          `json:"assetsSHA256,omitempty" validate:"omitempty,dive,len=64,hexadecimal"`
-	FrameHash     map[string]string `json:"frameHash,omitempty"`
+	AssetsSHA256  []string          `json:"assetsSHA256,omitempty" validate:"omitempty,dive,len=66,startswith=0x,hexadecimal"`
+	FrameHash     *FrameHash        `json:"frameHash,omitempty"`
 }
 
-// ProvenanceBlock represents provenance information
-type ProvenanceBlock struct {
-	Type         string           `json:"type" validate:"required,oneof=onChain seriesRegistry offChainURI"`
-	Contract     map[string]any   `json:"contract,omitempty"`
-	Dependencies []map[string]any `json:"dependencies,omitempty"`
+// Contract represents the contract information
+type Contract struct {
+	Chain    string `json:"chain" validate:"required,oneof=evm tezos bitmark other"`
+	Standard string `json:"standard" validate:"omitempty,oneof=erc1155 erc721 fa2 other"`
+	Address  string `json:"address" validate:"omitempty,max=48"`
+	SeriesID string `json:"seriesId" validate:"omitempty,max=128"`
+	TokenID  string `json:"tokenId" validate:"omitempty,max=128"`
+	URI      string `json:"uri" validate:"omitempty,url"`
+	MetaHash string `json:"metaHash" validate:"omitempty,len=66,startswith=0x,hexadecimal"`
+}
+
+// Dependency represents the dependency information
+type Dependency struct {
+	Chain    string `json:"chain" validate:"omitempty,oneof=evm tezos bitmark other"`
+	Standard string `json:"standard" validate:"omitempty,oneof=erc1155 erc721 fa2 other"`
+	URI      string `json:"uri" validate:"omitempty,url"`
+}
+
+// Provenance represents provenance information
+type Provenance struct {
+	Type         string       `json:"type" validate:"required,oneof=onChain seriesRegistry offChainURI"`
+	Contract     *Contract    `json:"contract,omitempty" validate:"omitempty"`
+	Dependencies []Dependency `json:"dependencies,omitempty" validate:"omitempty,max=1024,dive"`
+}
+
+// Defaults represents the default values for a playlist
+type Defaults struct {
+	Display  *Display `json:"display,omitempty" validate:"omitempty"`
+	License  string   `json:"license,omitempty" validate:"omitempty,oneof=open token subscription"`
+	Duration int      `json:"duration,omitempty" validate:"omitempty,min=1"`
 }
 
 // Playlist represents a DP-1 playlist
 type Playlist struct {
 	DPVersion string         `json:"dpVersion" validate:"required,semver"`
 	ID        string         `json:"id" validate:"required,uuid4"`
-	Slug      string         `json:"slug,omitempty" validate:"omitempty,max=100,alphanum|contains=-|contains=_"`
+	Slug      string         `json:"slug,omitempty" validate:"required,max=64,alphanum|contains=-|contains=_"`
 	Title     string         `json:"title,omitempty" validate:"required,max=256"`
 	Created   string         `json:"created" validate:"required,datetime=2006-01-02T15:04:05Z"`
-	Defaults  map[string]any `json:"defaults,omitempty"`
-	Items     []PlaylistItem `json:"items" validate:"required,min=1,dive"`
+	Defaults  *Defaults      `json:"defaults,omitempty" validate:"omitempty"`
+	Items     []PlaylistItem `json:"items" validate:"required,min=1,max=1024,dive"`
 	Signature *string        `json:"signature,omitempty" validate:"omitempty,startswith=ed25519:"`
 }
 
