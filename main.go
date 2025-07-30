@@ -21,8 +21,12 @@ var rootCmd = &cobra.Command{
 var playlistCmd = &cobra.Command{
 	Use:   "playlist",
 	Short: "Validate a DP-1 playlist",
-	Long: `Validate a DP-1 playlist by verifying its Ed25519 signature.
-The playlist can be provided as a URL or base64 encoded payload.`,
+	Long: `Validate a DP-1 playlist structure and optionally verify its Ed25519 signature.
+The playlist can be provided as a URL or base64 encoded payload.
+
+Usage modes:
+1. Structure only: --playlist <input> (validates playlist format without signature verification)
+2. With signature verification: --playlist <input> --pubkey <hex> (validates structure and verifies signature)`,
 	RunE: validatePlaylist,
 }
 
@@ -59,9 +63,8 @@ var (
 func init() {
 	// Playlist command flags
 	playlistCmd.Flags().StringVar(&playlistInput, "playlist", "", "Playlist URL or base64 encoded payload (required)")
-	playlistCmd.Flags().StringVar(&pubkeyHex, "pubkey", "", "Ed25519 public key as hex for signature verification (required)")
+	playlistCmd.Flags().StringVar(&pubkeyHex, "pubkey", "", "Ed25519 public key as hex for signature verification (optional)")
 	_ = playlistCmd.MarkFlagRequired("playlist")
-	_ = playlistCmd.MarkFlagRequired("pubkey")
 
 	// Capsule command flags
 	capsuleCmd.Flags().StringVar(&capsulePath, "path", "", "Path to .dp1c capsule file (required)")
@@ -104,45 +107,60 @@ func validatePlaylist(cmd *cobra.Command, args []string) error {
 
 	// Check if signature exists
 	if !playlist.HasSignature(p) {
-		return fmt.Errorf("playlist does not contain a signature")
+		fmt.Printf("⚠️  Playlist does not contain a signature\n")
+	} else {
+		signature := *p.Signature
+
+		// Validate signature format
+		fmt.Printf("\n📝 Validating signature format...\n")
+		if err := validator.ValidateSignatureFormat(signature); err != nil {
+			return fmt.Errorf("invalid signature format: %w", err)
+		}
+		fmt.Printf("✅ Signature format is valid\n")
+
+		// If pubkey is provided, verify the signature
+		if pubkeyHex != "" {
+			// Validate public key format
+			fmt.Printf("\n🔑 Validating public key format...\n")
+			if err := validator.ValidatePublicKey(pubkeyHex); err != nil {
+				return fmt.Errorf("invalid public key: %w", err)
+			}
+			fmt.Printf("✅ Public key format is valid\n")
+
+			// Get signable content (playlist without signature)
+			fmt.Printf("\n🔒 Preparing content for verification...\n")
+			signableContent, err := playlist.CanonicalizePlaylist(p, true)
+			if err != nil {
+				return fmt.Errorf("failed to prepare signable content: %w", err)
+			}
+			fmt.Printf("✅ Signable content prepared\n")
+
+			// Verify signature
+			fmt.Printf("\n✍️  Verifying Ed25519 signature...\n")
+			if err := validator.VerifySignature(pubkeyHex, signableContent, signature); err != nil {
+				return fmt.Errorf("signature verification failed: %w", err)
+			}
+
+			fmt.Printf("🎉 Playlist signature verification successful!\n")
+		} else {
+			fmt.Printf("⚠️  No public key provided - skipping signature verification\n")
+		}
 	}
 
-	// Validate public key format
-	fmt.Printf("\n🔑 Validating public key format...\n")
-	if err := validator.ValidatePublicKey(pubkeyHex); err != nil {
-		return fmt.Errorf("invalid public key: %w", err)
-	}
-	fmt.Printf("✅ Public key format is valid\n")
-
-	// Validate signature format
-	fmt.Printf("\n📝 Validating signature format...\n")
-	if err := validator.ValidateSignatureFormat(*p.Signature); err != nil {
-		return fmt.Errorf("invalid signature format: %w", err)
-	}
-	fmt.Printf("✅ Signature format is valid\n")
-
-	// Get signable content (playlist without signature)
-	fmt.Printf("\n🔒 Preparing content for verification...\n")
-	signature := *p.Signature
-	signableContent, err := playlist.CanonicalizePlaylist(p, true)
-	if err != nil {
-		return fmt.Errorf("failed to prepare signable content: %w", err)
-	}
-	fmt.Printf("✅ Signable content prepared\n")
-
-	// Verify signature
-	fmt.Printf("\n✍️  Verifying Ed25519 signature...\n")
-	if err := validator.VerifySignature(pubkeyHex, signableContent, signature); err != nil {
-		return fmt.Errorf("signature verification failed: %w", err)
-	}
-
-	fmt.Printf("🎉 Playlist signature verification successful!\n")
 	fmt.Printf("\n📊 Summary:\n")
 	fmt.Printf("   - Playlist ID: %s\n", p.ID)
 	fmt.Printf("   - DP Version: %s\n", p.DPVersion)
 	fmt.Printf("   - Items: %d\n", len(p.Items))
-	fmt.Printf("   - Signature: Valid ✅\n")
-	fmt.Printf("   - Public Key: %s...\n", pubkeyHex[:16])
+	if playlist.HasSignature(p) {
+		if pubkeyHex != "" {
+			fmt.Printf("   - Signature: Valid ✅\n")
+			fmt.Printf("   - Public Key: %s...\n", pubkeyHex[:16])
+		} else {
+			fmt.Printf("   - Signature: Present (not verified)\n")
+		}
+	} else {
+		fmt.Printf("   - Signature: None\n")
+	}
 
 	return nil
 }

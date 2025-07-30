@@ -62,6 +62,20 @@ func TestCLIHelpText(t *testing.T) {
 	if rootCmd.Long != expectedLong {
 		t.Errorf("rootCmd should have long description: %s", rootCmd.Long)
 	}
+
+	// Test playlist command help text
+	expectedPlaylistContent := []string{
+		"Validate a DP-1 playlist structure",
+		"optionally verify its Ed25519 signature",
+		"Structure only:",
+		"With signature verification:",
+	}
+
+	for _, content := range expectedPlaylistContent {
+		if !strings.Contains(playlistCmd.Long, content) {
+			t.Errorf("Playlist help text should contain: %s", content)
+		}
+	}
 }
 
 // Test global variables initialization
@@ -122,13 +136,15 @@ func TestPlaylistCommandFlags(t *testing.T) {
 		t.Error("playlist command should have --pubkey flag")
 	}
 
-	// Check that required flags are marked as required
-	requiredFlags := []string{"playlist", "pubkey"}
-	for _, flagName := range requiredFlags {
-		annotations := playlistCmd.Flags().Lookup(flagName).Annotations
-		if annotations == nil || annotations[cobra.BashCompOneRequiredFlag] == nil {
-			t.Errorf("Flag %s should be required", flagName)
-		}
+	// Check that only playlist is required, pubkey is optional
+	playlistAnnotations := playlistFlag.Annotations
+	if playlistAnnotations == nil || playlistAnnotations[cobra.BashCompOneRequiredFlag] == nil {
+		t.Error("Flag playlist should be required")
+	}
+
+	pubkeyAnnotations := pubkeyFlag.Annotations
+	if pubkeyAnnotations != nil && pubkeyAnnotations[cobra.BashCompOneRequiredFlag] != nil {
+		t.Error("Flag pubkey should be optional")
 	}
 }
 
@@ -246,6 +262,63 @@ func TestCapsuleUsageModes(t *testing.T) {
 		if !strings.Contains(helpText, content) {
 			t.Errorf("Help text should contain: %s", content)
 		}
+	}
+}
+
+func TestPlaylistCommandValidation(t *testing.T) {
+	tests := []struct {
+		name        string
+		args        []string
+		shouldError bool
+		errorMsg    string
+	}{
+		{
+			name:        "No flags provided",
+			args:        []string{"playlist"},
+			shouldError: true,
+			errorMsg:    "required flag(s) \"playlist\" not set",
+		},
+		{
+			name:        "Only playlist provided (no pubkey)",
+			args:        []string{"playlist", "--playlist", "test-playlist"},
+			shouldError: false, // Will error later due to invalid playlist, but flag validation passes
+		},
+		{
+			name:        "Playlist with pubkey provided",
+			args:        []string{"playlist", "--playlist", "test-playlist", "--pubkey", "test-pubkey"},
+			shouldError: false, // Will error later due to invalid playlist, but flag validation passes
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset flags
+			playlistInput = ""
+			pubkeyHex = ""
+
+			// Set up command with args
+			rootCmd.SetArgs(tt.args)
+
+			// Execute command
+			err := rootCmd.Execute()
+
+			if tt.shouldError {
+				if err == nil {
+					t.Errorf("Expected error but got none")
+				} else if !strings.Contains(err.Error(), tt.errorMsg) {
+					t.Errorf("Expected error containing %q, got %q", tt.errorMsg, err.Error())
+				}
+			} else {
+				// For cases that shouldn't error in flag validation, they might still error
+				// due to invalid playlist, but we're just testing the flag validation
+				if err != nil && strings.Contains(err.Error(), "required flag(s)") {
+					t.Errorf("Unexpected flag validation error: %v", err)
+				}
+			}
+
+			// Reset args for next test
+			rootCmd.SetArgs([]string{})
+		})
 	}
 }
 
