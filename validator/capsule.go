@@ -74,11 +74,6 @@ func validateArchiveEntryName(name string) error {
 		return fmt.Errorf("paths starting with separator not allowed: %s", name)
 	}
 
-	// Additional check for cleaned path being different from original (suspicious)
-	if cleanName != name && cleanName != strings.TrimRight(name, "/") {
-		return fmt.Errorf("suspicious path detected: %s", name)
-	}
-
 	return nil
 }
 
@@ -165,6 +160,13 @@ func extractTarZstd(archivePath, destDir string) error {
 			return fmt.Errorf("failed to read tar header: %w", err)
 		}
 
+		if strings.HasPrefix(filepath.Base(header.Name), "._") ||
+			strings.HasPrefix(filepath.Base(header.Name), ".DS_Store") ||
+			strings.HasPrefix(filepath.Base(header.Name), "__MACOSX/") {
+			// Skip these files as they are not part of the capsule
+			continue
+		}
+
 		// Validate archive entry name to prevent tar slip attacks
 		if err := validateArchiveEntryName(header.Name); err != nil {
 			return fmt.Errorf("invalid archive entry: %w", err)
@@ -182,6 +184,7 @@ func extractTarZstd(archivePath, destDir string) error {
 
 		switch header.Typeflag {
 		case tar.TypeDir:
+			destPath = strings.TrimSuffix(destPath, ":")
 			// Create directory
 			//nolint:gosec // G115: We've checked for path traversal
 			if err := os.MkdirAll(destPath, os.FileMode(header.Mode)); err != nil {
