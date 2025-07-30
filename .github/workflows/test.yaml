@@ -34,7 +34,7 @@ jobs:
         run: go test -bench=. -benchmem ./...
 
       - name: Run tests with coverage
-        run: go test -v -coverprofile=coverage.out -covermode=atomic ./...
+        run: go test -v -coverprofile=coverage.out -covermode=atomic $(go list ./... | grep -vE "/cdp")
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
