@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/feral-file/dp-1/validator/playlist"
-	"github.com/feral-file/dp-1/validator/validator"
+	"github.com/display-protocol/dp1-validator/playlist"
+	"github.com/display-protocol/dp1-validator/validator"
 	"github.com/klauspost/compress/zstd"
 	"github.com/spf13/cobra"
 )

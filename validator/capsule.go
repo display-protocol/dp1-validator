@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/feral-file/dp-1/validator/playlist"
+	"github.com/display-protocol/dp1-validator/playlist"
 	"github.com/klauspost/compress/zstd"
 )
 
