@@ -612,7 +612,7 @@ func TestExtractCapsule(t *testing.T) {
 			errorMsg:    "empty entry name",
 		},
 		{
-			name: "Total extraction size limit exceeded",
+			name: "Single file size limit exceeded",
 			setupFile: func(t *testing.T) string {
 				// Create a capsule with a file that has a large size in the header
 				tempDir, err := os.MkdirTemp("", "test-total-size-*")
@@ -700,54 +700,6 @@ func TestExtractCapsule(t *testing.T) {
 			},
 			expectError: true,
 			errorMsg:    "assets/ exists but is not a directory",
-		},
-		{
-			name: "Suspicious compression ratio",
-			setupFile: func(t *testing.T) string {
-				// Create a capsule with a file that has a large size in the header
-				tempDir, err := os.MkdirTemp("", "test-compression-ratio-*")
-				if err != nil {
-					t.Fatalf("Failed to create temp dir: %v", err)
-				}
-				t.Cleanup(func() { _ = os.RemoveAll(tempDir) })
-
-				// Create capsule content directory
-				capsuleDir := filepath.Join(tempDir, "capsule")
-				if err := os.MkdirAll(capsuleDir, 0750); err != nil {
-					t.Fatalf("Failed to create capsule dir: %v", err)
-				}
-
-				// Write playlist.json
-				playlistJSON, err := json.MarshalIndent(validPlaylist, "", "  ")
-				if err != nil {
-					t.Fatalf("Failed to marshal playlist: %v", err)
-				}
-				if err := os.WriteFile(filepath.Join(capsuleDir, "playlist.json"), playlistJSON, 0600); err != nil {
-					t.Fatalf("Failed to write playlist.json: %v", err)
-				}
-
-				// Create assets directory
-				assetsDir := filepath.Join(capsuleDir, "assets")
-				if err := os.MkdirAll(assetsDir, 0750); err != nil {
-					t.Fatalf("Failed to create assets dir: %v", err)
-				}
-
-				// Create a small file
-				smallFilePath := filepath.Join(assetsDir, "small.txt")
-				if err := os.WriteFile(smallFilePath, []byte("small content"), 0600); err != nil {
-					t.Fatalf("Failed to write small file: %v", err)
-				}
-
-				// Create .dp1c archive with modified tar header
-				capsulePath := filepath.Join(tempDir, "test.dp1c")
-				if err := createLargeFileArchive(capsuleDir, capsulePath); err != nil {
-					t.Fatalf("Failed to create .dp1c archive: %v", err)
-				}
-
-				return capsulePath
-			},
-			expectError: true,
-			errorMsg:    "exceeds maximum size limit",
 		},
 	}
 
