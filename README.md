@@ -93,7 +93,7 @@ package main
 
 import (
     "fmt"
-    "github.com/feral-file/dp-1/validator/validator"
+    "github.com/display-protocol/dp1-validator/validator"
 )
 
 func main() {
