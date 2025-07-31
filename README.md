@@ -44,6 +44,8 @@ Validate a DP-1 playlist by verifying its Ed25519 signature:
 
 **Required flags:**
 - `--playlist`: Playlist URL or base64 encoded payload
+
+**Optional flags:**
 - `--pubkey`: Ed25519 public key as hex string for signature verification
 
 ### Capsule Validation
