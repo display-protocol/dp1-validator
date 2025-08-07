@@ -1418,6 +1418,201 @@ func TestMarginValueMarshalUnmarshal(t *testing.T) {
 	}
 }
 
+func TestMarginMethods(t *testing.T) {
+	tests := []struct {
+		name             string
+		margin           Margin
+		expectedString   string
+		expectedIsString bool
+		expectedIsNumber bool
+		expectedAsString string
+		expectedAsInt    int
+		expectedAsFloat  float64
+	}{
+		{
+			name:             "String margin with px",
+			margin:           Margin{Value: "10px"},
+			expectedString:   "10px",
+			expectedIsString: true,
+			expectedIsNumber: false,
+			expectedAsString: "10px",
+			expectedAsInt:    0,
+			expectedAsFloat:  0,
+		},
+		{
+			name:             "String margin with percentage",
+			margin:           Margin{Value: "50%"},
+			expectedString:   "50%",
+			expectedIsString: true,
+			expectedIsNumber: false,
+			expectedAsString: "50%",
+			expectedAsInt:    0,
+			expectedAsFloat:  0,
+		},
+		{
+			name:             "String margin with vw",
+			margin:           Margin{Value: "25vw"},
+			expectedString:   "25vw",
+			expectedIsString: true,
+			expectedIsNumber: false,
+			expectedAsString: "25vw",
+			expectedAsInt:    0,
+			expectedAsFloat:  0,
+		},
+		{
+			name:             "Integer margin",
+			margin:           Margin{Value: 15},
+			expectedString:   "15px",
+			expectedIsString: false,
+			expectedIsNumber: true,
+			expectedAsString: "",
+			expectedAsInt:    15,
+			expectedAsFloat:  15.0,
+		},
+		{
+			name:             "Zero integer margin",
+			margin:           Margin{Value: 0},
+			expectedString:   "0px",
+			expectedIsString: false,
+			expectedIsNumber: true,
+			expectedAsString: "",
+			expectedAsInt:    0,
+			expectedAsFloat:  0.0,
+		},
+		{
+			name:             "Float margin",
+			margin:           Margin{Value: 10.5},
+			expectedString:   "11px", // Rounded
+			expectedIsString: false,
+			expectedIsNumber: true,
+			expectedAsString: "",
+			expectedAsInt:    11, // Rounded
+			expectedAsFloat:  10.5,
+		},
+		{
+			name:             "Float margin with .75",
+			margin:           Margin{Value: 9.75},
+			expectedString:   "10px", // Rounded
+			expectedIsString: false,
+			expectedIsNumber: true,
+			expectedAsString: "",
+			expectedAsInt:    10, // Rounded
+			expectedAsFloat:  9.75,
+		},
+		{
+			name:             "Float margin with .25",
+			margin:           Margin{Value: 9.25},
+			expectedString:   "9px", // Rounded
+			expectedIsString: false,
+			expectedIsNumber: true,
+			expectedAsString: "",
+			expectedAsInt:    9, // Rounded
+			expectedAsFloat:  9.25,
+		},
+		{
+			name:             "Nil margin",
+			margin:           Margin{Value: nil},
+			expectedString:   "",
+			expectedIsString: false,
+			expectedIsNumber: false,
+			expectedAsString: "",
+			expectedAsInt:    0,
+			expectedAsFloat:  0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test String() method
+			if got := tt.margin.String(); got != tt.expectedString {
+				t.Errorf("String() = %q, want %q", got, tt.expectedString)
+			}
+
+			// Test IsString() method
+			if got := tt.margin.IsString(); got != tt.expectedIsString {
+				t.Errorf("IsString() = %v, want %v", got, tt.expectedIsString)
+			}
+
+			// Test IsNumber() method
+			if got := tt.margin.IsNumber(); got != tt.expectedIsNumber {
+				t.Errorf("IsNumber() = %v, want %v", got, tt.expectedIsNumber)
+			}
+
+			// Test AsString() method
+			if got := tt.margin.AsString(); got != tt.expectedAsString {
+				t.Errorf("AsString() = %q, want %q", got, tt.expectedAsString)
+			}
+
+			// Test AsInt() method
+			if got := tt.margin.AsInt(); got != tt.expectedAsInt {
+				t.Errorf("AsInt() = %d, want %d", got, tt.expectedAsInt)
+			}
+
+			// Test AsFloat() method
+			if got := tt.margin.AsFloat(); got != tt.expectedAsFloat {
+				t.Errorf("AsFloat() = %f, want %f", got, tt.expectedAsFloat)
+			}
+
+			// Test Ptr() method
+			ptr := tt.margin.Ptr()
+			if ptr == nil {
+				t.Error("Ptr() returned nil")
+			}
+			if ptr.String() != tt.margin.String() {
+				t.Errorf("Ptr().String() = %q, want %q", ptr.String(), tt.margin.String())
+			}
+		})
+	}
+}
+
+func TestMarginEdgeCases(t *testing.T) {
+	t.Run("Large numbers", func(t *testing.T) {
+		largeInt := Margin{Value: 999999}
+		if largeInt.String() != "999999px" {
+			t.Errorf("Large int string = %q, want %q", largeInt.String(), "999999px")
+		}
+		if largeInt.AsInt() != 999999 {
+			t.Errorf("Large int AsInt() = %d, want %d", largeInt.AsInt(), 999999)
+		}
+
+		largeFloat := Margin{Value: 999999.99}
+		if largeFloat.String() != "1000000px" { // Rounded
+			t.Errorf("Large float string = %q, want %q", largeFloat.String(), "1000000px")
+		}
+		if largeFloat.AsFloat() != 999999.99 {
+			t.Errorf("Large float AsFloat() = %f, want %f", largeFloat.AsFloat(), 999999.99)
+		}
+	})
+
+	t.Run("Negative numbers", func(t *testing.T) {
+		negInt := Margin{Value: -10}
+		if negInt.String() != "-10px" {
+			t.Errorf("Negative int string = %q, want %q", negInt.String(), "-10px")
+		}
+		if negInt.AsInt() != -10 {
+			t.Errorf("Negative int AsInt() = %d, want %d", negInt.AsInt(), -10)
+		}
+
+		negFloat := Margin{Value: -10.5}
+		if negFloat.String() != "-11px" { // Rounded
+			t.Errorf("Negative float string = %q, want %q", negFloat.String(), "-11px")
+		}
+		if negFloat.AsFloat() != -10.5 {
+			t.Errorf("Negative float AsFloat() = %f, want %f", negFloat.AsFloat(), -10.5)
+		}
+	})
+
+	t.Run("Empty string", func(t *testing.T) {
+		emptyStr := Margin{Value: ""}
+		if !emptyStr.IsString() {
+			t.Error("Empty string should be identified as string")
+		}
+		if emptyStr.AsString() != "" {
+			t.Errorf("Empty string AsString() = %q, want %q", emptyStr.AsString(), "")
+		}
+	})
+}
+
 // Benchmark tests
 func BenchmarkParsePlaylist(b *testing.B) {
 	for range b.N {
