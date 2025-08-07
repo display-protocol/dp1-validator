@@ -9,6 +9,7 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -22,8 +23,45 @@ var validate *validator.Validate
 
 // Custom validator
 var marginValidator = func(fl validator.FieldLevel) bool {
-	value := fl.Field().String()
-	return regexp.MustCompile(`^[0-9]+(\.[0-9]+)?(px|%|vw|vh)$`).MatchString(value)
+	field := fl.Field()
+
+	// Handle pointer to Margin
+	if field.Kind() == reflect.Ptr {
+		if field.IsNil() {
+			return true // nil pointers are valid (omitempty)
+		}
+		field = field.Elem()
+	}
+
+	// Get the Margin struct
+	if field.Type().Name() != "Margin" {
+		return false
+	}
+
+	// Get the Value field
+	valueField := field.FieldByName("Value")
+	if !valueField.IsValid() {
+		return false
+	}
+
+	value := valueField.Interface()
+
+	switch v := value.(type) {
+	case nil:
+		// nil values are valid (for omitempty fields)
+		return true
+	case string:
+		// Validate string format: number + unit (px, %, vw, vh)
+		return regexp.MustCompile(`^[0-9]+(\.[0-9]+)?(px|%|vw|vh)$`).MatchString(v)
+	case int:
+		// Integers are valid (will be converted to px)
+		return v >= 0
+	case float64:
+		// Floats are valid (will be converted to px)
+		return v >= 0
+	default:
+		return false
+	}
 }
 var backgroundValidator = func(fl validator.FieldLevel) bool {
 	value := fl.Field().String()
@@ -39,11 +77,11 @@ func init() {
 // PlaylistItem represents a single item in a DP-1 playlist
 type PlaylistItem struct {
 	ID         string         `json:"id" validate:"required,uuid4"`
-	Title      string         `json:"title,omitempty" validate:"omitempty,max=256"`
+	Title      *string        `json:"title,omitempty" validate:"omitempty,max=256"`
 	Source     string         `json:"source" validate:"required,url"`
 	Duration   int            `json:"duration,omitempty" validate:"required,min=1"`
 	License    string         `json:"license,omitempty" validate:"required,oneof=open token subscription"`
-	Ref        string         `json:"ref,omitempty" validate:"omitempty,url"`
+	Ref        *string        `json:"ref,omitempty" validate:"omitempty,url"`
 	Override   map[string]any `json:"override,omitempty"`
 	Display    *Display       `json:"display,omitempty" validate:"omitempty"`
 	Repro      *ReproBlock    `json:"repro,omitempty" validate:"omitempty"`
@@ -52,85 +90,172 @@ type PlaylistItem struct {
 
 // Mouse represents the mouse interaction
 type Mouse struct {
-	Click  bool `json:"click" validate:"omitempty"`
-	Drag   bool `json:"drag" validate:"omitempty"`
-	Scroll bool `json:"scroll" validate:"omitempty"`
-	Hover  bool `json:"hover" validate:"omitempty"`
+	Click  *bool `json:"click,omitempty" validate:"omitempty"`
+	Drag   *bool `json:"drag,omitempty" validate:"omitempty"`
+	Scroll *bool `json:"scroll,omitempty" validate:"omitempty"`
+	Hover  *bool `json:"hover,omitempty" validate:"omitempty"`
 }
 
 // Interaction represents the interaction of a playlist item
 type Interaction struct {
-	Keyboard []string `json:"keyboard" validate:"omitempty"`
-	Mouse    *Mouse   `json:"mouse" validate:"omitempty"`
+	Keyboard []string `json:"keyboard,omitempty" validate:"omitempty"`
+	Mouse    *Mouse   `json:"mouse,omitempty" validate:"omitempty"`
 }
 
-type Margin string
+// Margin represents a margin value that can be either a string or number
+type Margin struct {
+	Value any `json:"-"`
+}
 
-// UnmarshalJSON implements custom JSON unmarshaling for MarginValue
+// UnmarshalJSON implements custom JSON unmarshaling for Margin
 func (m *Margin) UnmarshalJSON(data []byte) error {
-	// First try to unmarshal as string
-	var str string
-	if err := json.Unmarshal(data, &str); err == nil {
-		*m = Margin(str)
+	// Handle null values
+	if string(data) == "null" {
+		m.Value = nil
 		return nil
 	}
 
-	// If string fails, try to unmarshal as number
-	var num float64
+	// First try to unmarshal as string
+	var str string
+	if err := json.Unmarshal(data, &str); err == nil {
+		m.Value = str
+		return nil
+	}
+
+	// If string fails, try to unmarshal as number (int or float)
+	var num json.Number
 	if err := json.Unmarshal(data, &num); err != nil {
 		return fmt.Errorf("margin must be a string or number: %w", err)
 	}
 
-	// Convert number to string with "px" units, rounding to nearest integer
-	*m = Margin(fmt.Sprintf("%.0fpx", math.Round(num)))
-	return nil
+	// Try to parse as integer first
+	if intVal, err := num.Int64(); err == nil {
+		m.Value = int(intVal)
+		return nil
+	}
+
+	// If not an integer, parse as float
+	if floatVal, err := num.Float64(); err == nil {
+		m.Value = floatVal
+		return nil
+	}
+
+	return fmt.Errorf("margin number value is invalid: %s", num)
+}
+
+// MarshalJSON implements custom JSON marshaling for Margin
+func (m Margin) MarshalJSON() ([]byte, error) {
+	return json.Marshal(m.Value)
 }
 
 // String returns the string representation of the margin value
 func (m Margin) String() string {
-	return string(m)
+	switch v := m.Value.(type) {
+	case nil:
+		return ""
+	case string:
+		return v
+	case int:
+		return fmt.Sprintf("%dpx", v)
+	case float64:
+		return fmt.Sprintf("%.0fpx", math.Round(v))
+	default:
+		return fmt.Sprintf("%v", v)
+	}
+}
+
+// IsString returns true if the margin value is a string
+func (m Margin) IsString() bool {
+	_, ok := m.Value.(string)
+	return ok
+}
+
+// IsNumber returns true if the margin value is a number
+func (m Margin) IsNumber() bool {
+	switch m.Value.(type) {
+	case int, float64:
+		return true
+	default:
+		return false
+	}
+}
+
+// AsString returns the value as a string, or empty string if not a string
+func (m Margin) AsString() string {
+	if str, ok := m.Value.(string); ok {
+		return str
+	}
+	return ""
+}
+
+// AsInt returns the value as an integer, or 0 if not convertible
+func (m Margin) AsInt() int {
+	switch v := m.Value.(type) {
+	case int:
+		return v
+	case float64:
+		return int(math.Round(v))
+	default:
+		return 0
+	}
+}
+
+// AsFloat returns the value as a float64, or 0 if not convertible
+func (m Margin) AsFloat() float64 {
+	switch v := m.Value.(type) {
+	case int:
+		return float64(v)
+	case float64:
+		return v
+	default:
+		return 0
+	}
+}
+
+func (m Margin) Ptr() *Margin {
+	return &m
 }
 
 // Display represents the display properties of a playlist item
 type Display struct {
-	Scaling     string       `json:"scaling" validate:"omitempty,oneof=fit fill stretch auto"`
-	Margin      Margin       `json:"margin" validate:"omitempty,margin"`
-	Background  string       `json:"background" validate:"omitempty,background"`
-	AutoPlay    bool         `json:"autoPlay" validate:"omitempty"`
-	Loop        bool         `json:"loop" validate:"omitempty"`
-	Interaction *Interaction `json:"interaction,omitempty"`
+	Scaling     *string      `json:"scaling,omitempty" validate:"omitempty,oneof=fit fill stretch auto"`
+	Margin      *Margin      `json:"margin,omitempty" validate:"omitempty,margin"`
+	Background  *string      `json:"background,omitempty" validate:"omitempty,background"`
+	AutoPlay    *bool        `json:"autoPlay,omitempty" validate:"omitempty"`
+	Loop        *bool        `json:"loop,omitempty" validate:"omitempty"`
+	Interaction *Interaction `json:"interaction,omitempty" validate:"omitempty"`
 }
 
 // FrameHash represents the hash of a frame
 type FrameHash struct {
-	SHA256 string `json:"sha256" validate:"required,len=66,startswith=0x,hexadecimal"`
-	PHash  string `json:"phash" validate:"omitempty,len=18,startswith=0x,hexadecimal"`
+	SHA256 string  `json:"sha256" validate:"required,len=66,startswith=0x,hexadecimal"`
+	PHash  *string `json:"phash,omitempty" validate:"omitempty,len=18,startswith=0x,hexadecimal"`
 }
 
 // ReproBlock represents reproduction verification data
 type ReproBlock struct {
 	EngineVersion map[string]string `json:"engineVersion,omitempty"`
-	Seed          string            `json:"seed,omitempty" validate:"omitempty,hexadecimal"`
+	Seed          *string           `json:"seed,omitempty" validate:"omitempty,hexadecimal"`
 	AssetsSHA256  []string          `json:"assetsSHA256,omitempty" validate:"omitempty,dive,len=66,startswith=0x,hexadecimal"`
 	FrameHash     *FrameHash        `json:"frameHash,omitempty"`
 }
 
 // Contract represents the contract information
 type Contract struct {
-	Chain    string `json:"chain" validate:"required,oneof=evm tezos bitmark other"`
-	Standard string `json:"standard" validate:"omitempty,oneof=erc1155 erc721 fa2 other"`
-	Address  string `json:"address" validate:"omitempty,max=48"`
-	SeriesID string `json:"seriesId" validate:"omitempty,max=128"`
-	TokenID  string `json:"tokenId" validate:"omitempty,max=128"`
-	URI      string `json:"uri" validate:"omitempty,url"`
-	MetaHash string `json:"metaHash" validate:"omitempty,len=66,startswith=0x,hexadecimal"`
+	Chain    string  `json:"chain" validate:"required,oneof=evm tezos bitmark other"`
+	Standard *string `json:"standard,omitempty" validate:"omitempty,oneof=erc1155 erc721 fa2 other"`
+	Address  *string `json:"address,omitempty" validate:"omitempty,max=48"`
+	SeriesID *string `json:"seriesId,omitempty" validate:"omitempty,max=128"`
+	TokenID  *string `json:"tokenId,omitempty" validate:"omitempty,max=128"`
+	URI      *string `json:"uri,omitempty" validate:"omitempty,url"`
+	MetaHash *string `json:"metaHash,omitempty" validate:"omitempty,len=66,startswith=0x,hexadecimal"`
 }
 
 // Dependency represents the dependency information
 type Dependency struct {
-	Chain    string `json:"chain" validate:"omitempty,oneof=evm tezos bitmark other"`
-	Standard string `json:"standard" validate:"omitempty,oneof=erc1155 erc721 fa2 other"`
-	URI      string `json:"uri" validate:"omitempty,url"`
+	Chain    string  `json:"chain,omitempty" validate:"omitempty,oneof=evm tezos bitmark other"`
+	Standard *string `json:"standard,omitempty" validate:"omitempty,oneof=erc1155 erc721 fa2 other"`
+	URI      string  `json:"uri,omitempty" validate:"omitempty,url"`
 }
 
 // Provenance represents provenance information

@@ -105,8 +105,10 @@ func validatePlaylist(cmd *cobra.Command, args []string) error {
 	}
 	fmt.Printf("✅ Playlist structure is valid\n")
 
+	hasSignature := playlist.HasSignature(p)
+
 	// Check if signature exists
-	if !playlist.HasSignature(p) {
+	if !hasSignature {
 		fmt.Printf("⚠️  Playlist does not contain a signature\n")
 	} else {
 		signature := *p.Signature
@@ -151,7 +153,7 @@ func validatePlaylist(cmd *cobra.Command, args []string) error {
 	fmt.Printf("   - Playlist ID: %s\n", p.ID)
 	fmt.Printf("   - DP Version: %s\n", p.DPVersion)
 	fmt.Printf("   - Items: %d\n", len(p.Items))
-	if playlist.HasSignature(p) {
+	if hasSignature {
 		if pubkeyHex != "" {
 			fmt.Printf("   - Signature: Valid ✅\n")
 			fmt.Printf("   - Public Key: %s...\n", pubkeyHex[:16])

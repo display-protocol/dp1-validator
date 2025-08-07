@@ -3,7 +3,6 @@ package playlist
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -20,6 +19,10 @@ const (
 
 func stringPtr(s string) *string {
 	return &s
+}
+
+func boolPtr(b bool) *bool {
+	return &b
 }
 
 // Test data for playlist validation
@@ -309,8 +312,8 @@ func TestValidatePlaylistStructure(t *testing.T) {
 				Created:   "2025-06-03T17:01:00Z",
 				Defaults: &Defaults{
 					Display: &Display{
-						Scaling:    "fit",
-						Background: "#000000",
+						Scaling:    stringPtr("fit"),
+						Background: stringPtr("#000000"),
 					},
 					License:  "open",
 					Duration: 300,
@@ -318,11 +321,11 @@ func TestValidatePlaylistStructure(t *testing.T) {
 				Items: []PlaylistItem{
 					{
 						ID:       validItemUUID,
-						Title:    "Test Item",
+						Title:    stringPtr("Test Item"),
 						Source:   "https://example.com",
 						Duration: 180,
 						License:  "token",
-						Ref:      "https://example.com/ref",
+						Ref:      stringPtr("https://example.com/ref"),
 					},
 				},
 				Signature: stringPtr("ed25519:1234567890abcdef"),
@@ -525,7 +528,7 @@ func TestValidatePlaylistStructure(t *testing.T) {
 				Title:     "Test Playlist",
 				Created:   "2025-06-03T17:01:00Z",
 				Items: []PlaylistItem{
-					{ID: validItemUUID, Source: "https://example.com", Ref: "not-a-url", Duration: 300, License: "open"},
+					{ID: validItemUUID, Source: "https://example.com", Ref: stringPtr("not-a-url"), Duration: 300, License: "open"},
 				},
 			},
 			expectError: true,
@@ -555,7 +558,7 @@ func TestValidatePlaylistStructure(t *testing.T) {
 				Title:     "Test Playlist",
 				Created:   "2025-06-03T17:01:00Z",
 				Items: []PlaylistItem{
-					{ID: validItemUUID, Source: "https://example.com", Title: strings.Repeat("a", 257), Duration: 300, License: "open"},
+					{ID: validItemUUID, Source: "https://example.com", Title: stringPtr(strings.Repeat("a", 257)), Duration: 300, License: "open"},
 				},
 			},
 			expectError: true,
@@ -653,11 +656,11 @@ func TestValidatePlaylistStructure(t *testing.T) {
 				Created:   "2025-06-03T17:01:00Z",
 				Defaults: &Defaults{
 					Display: &Display{
-						Scaling:    "fit",
-						Margin:     "10px",
-						Background: "#000000",
-						AutoPlay:   true,
-						Loop:       false,
+						Scaling:    stringPtr("fit"),
+						Margin:     &Margin{Value: "10px"},
+						Background: stringPtr("#000000"),
+						AutoPlay:   boolPtr(true),
+						Loop:       boolPtr(false),
 					},
 				},
 				Items: []PlaylistItem{
@@ -676,7 +679,7 @@ func TestValidatePlaylistStructure(t *testing.T) {
 				Created:   "2025-06-03T17:01:00Z",
 				Defaults: &Defaults{
 					Display: &Display{
-						Scaling: "invalid-scaling",
+						Scaling: stringPtr("invalid-scaling"),
 					},
 				},
 				Items: []PlaylistItem{
@@ -696,7 +699,7 @@ func TestValidatePlaylistStructure(t *testing.T) {
 				Created:   "2025-06-03T17:01:00Z",
 				Defaults: &Defaults{
 					Display: &Display{
-						Margin: "invalid-margin",
+						Margin: &Margin{Value: "invalid-margin"},
 					},
 				},
 				Items: []PlaylistItem{
@@ -716,7 +719,7 @@ func TestValidatePlaylistStructure(t *testing.T) {
 				Created:   "2025-06-03T17:01:00Z",
 				Defaults: &Defaults{
 					Display: &Display{
-						Background: "invalid-color",
+						Background: stringPtr("invalid-color"),
 					},
 				},
 				Items: []PlaylistItem{
@@ -741,11 +744,11 @@ func TestValidatePlaylistStructure(t *testing.T) {
 						Duration: 300,
 						License:  "open",
 						Repro: &ReproBlock{
-							Seed:         "abcdef1234567890",
+							Seed:         stringPtr("abcdef1234567890"),
 							AssetsSHA256: []string{"0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"},
 							FrameHash: &FrameHash{
 								SHA256: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-								PHash:  "0xabcdef1234567890",
+								PHash:  stringPtr("0xabcdef1234567890"),
 							},
 						},
 					},
@@ -768,7 +771,7 @@ func TestValidatePlaylistStructure(t *testing.T) {
 						Duration: 300,
 						License:  "open",
 						Repro: &ReproBlock{
-							Seed: "invalid-seed",
+							Seed: stringPtr("invalid-seed"),
 						},
 					},
 				},
@@ -889,7 +892,7 @@ func TestValidatePlaylistStructure(t *testing.T) {
 						Repro: &ReproBlock{
 							FrameHash: &FrameHash{
 								SHA256: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-								PHash:  "short",
+								PHash:  stringPtr("short"),
 							},
 						},
 					},
@@ -916,11 +919,11 @@ func TestValidatePlaylistStructure(t *testing.T) {
 							Type: "onChain",
 							Contract: &Contract{
 								Chain:    "evm",
-								Standard: "erc721",
-								Address:  "123456789012345678901234567890123456789012345678",
-								TokenID:  "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678",
-								URI:      "https://example.com/metadata",
-								MetaHash: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+								Standard: stringPtr("erc721"),
+								Address:  stringPtr("123456789012345678901234567890123456789012345678"),
+								TokenID:  stringPtr("12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678"),
+								URI:      stringPtr("https://example.com/metadata"),
+								MetaHash: stringPtr("0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"),
 							},
 						},
 					},
@@ -1021,7 +1024,7 @@ func TestValidatePlaylistStructure(t *testing.T) {
 							Type: "onChain",
 							Contract: &Contract{
 								Chain:    "evm",
-								Standard: "invalid-standard",
+								Standard: stringPtr("invalid-standard"),
 							},
 						},
 					},
@@ -1048,7 +1051,7 @@ func TestValidatePlaylistStructure(t *testing.T) {
 							Type: "onChain",
 							Contract: &Contract{
 								Chain:   "evm",
-								Address: strings.Repeat("a", 49), // Exceeds max of 48
+								Address: stringPtr(strings.Repeat("a", 49)), // Exceeds max of 48
 							},
 						},
 					},
@@ -1075,7 +1078,7 @@ func TestValidatePlaylistStructure(t *testing.T) {
 							Type: "onChain",
 							Contract: &Contract{
 								Chain: "evm",
-								URI:   "not-a-url",
+								URI:   stringPtr("not-a-url"),
 							},
 						},
 					},
@@ -1102,7 +1105,7 @@ func TestValidatePlaylistStructure(t *testing.T) {
 							Type: "onChain",
 							Contract: &Contract{
 								Chain:    "evm",
-								MetaHash: "invalid-hash",
+								MetaHash: stringPtr("invalid-hash"),
 							},
 						},
 					},
@@ -1290,7 +1293,7 @@ func TestMarginValueMarshalUnmarshal(t *testing.T) {
 			expectedString: "0px",
 			expectError:    false,
 		},
-		// Valid number inputs (should be converted to px)
+		// Valid number inputs (should be converted to px in String() method)
 		{
 			name:           "Integer number",
 			input:          `15`,
@@ -1329,9 +1332,10 @@ func TestMarginValueMarshalUnmarshal(t *testing.T) {
 			errorContains: "margin must be a string or number",
 		},
 		{
-			name:        "Null value",
-			input:       `null`,
-			expectError: false, // null should be handled gracefully
+			name:           "Null value",
+			input:          `null`,
+			expectedString: "",
+			expectError:    false, // null should be handled gracefully
 		},
 		{
 			name:          "Array value",
@@ -1381,8 +1385,20 @@ func TestMarginValueMarshalUnmarshal(t *testing.T) {
 				return
 			}
 
-			// The marshaled result should be a JSON string
-			expectedJSON := fmt.Sprintf(`"%s"`, tt.expectedString)
+			// The marshaled result should preserve the original type
+			// Numbers stay as numbers, strings stay as strings
+			var expectedJSON string
+			if strings.Contains(tt.input, `"`) {
+				// Original input was a string, should marshal as string
+				expectedJSON = tt.input
+			} else if tt.input == "null" {
+				// Null input should marshal as null
+				expectedJSON = "null"
+			} else {
+				// Original input was a number, should marshal as number
+				expectedJSON = tt.input
+			}
+
 			if string(marshaled) != expectedJSON {
 				t.Errorf("Expected marshaled JSON %q, got %q", expectedJSON, string(marshaled))
 			}
