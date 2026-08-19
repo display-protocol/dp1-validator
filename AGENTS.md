@@ -37,7 +37,7 @@ There is **no** in-repo OpenAPI for a server; feed compatibility is described in
 | `21-cli-design.mdc` | **Always** | Mirrors `docs/cli_design.md`; Publish paths, `--json` contract. |
 | `35-testing-tdd.mdc` | **Always** | `make check`, test expectations. |
 | `spec-driven.mdc` | **Large / ambiguous work** | New command trees, wide refactors, contract shifts—plan first (no `PLANS.md` in this repo). |
-| `review-workflow.mdc` | **Before merge** | Reviewer sub-agent loop; see below. |
+| `review-workflow.mdc` | **Non-trivial changes** | Fresh-context completion review; see below. |
 
 **Feed-only concepts** (executor/store, OpenAPI, ETag, PostgreSQL) are **not** duplicated here; do not import workflows from other repos unless this project explicitly adopts them.
 
@@ -55,18 +55,18 @@ A change is complete when:
 1. **`make check`** passes (unless explicitly waived).
 2. Comments cover non-obvious intent where needed.
 3. User-visible behavior matches **`docs/cli_design.md`**; structure matches **`docs/architecture.md`** when applicable.
-4. The **`reviewer`** agent returns **`Verdict: accept`** per `prompts/code-review.md`.
+4. For non-trivial changes, a fresh-context review has reported findings per `prompts/code-review.md` for the change owner to disposition.
 
 ## Review workflow
 
-After implementation and green checks, run the review loop from `.cursor/rules/review-workflow.mdc`:
+For non-trivial changes, run the fresh-context review from `.cursor/rules/review-workflow.mdc` after implementation and green checks:
 
 1. Compact handoff (goal, files, decisions, checks, assumptions).
 2. Invoke the **`reviewer`** sub-agent: `.cursor/agents/reviewer.md`.
-3. On **`Verdict: revise`**, fix and repeat.
-4. Do not commit, push, or open a PR before **`Verdict: accept`** (per team policy in this file).
+3. The named human change owner decides how to disposition each finding.
+4. Treat the verdict as a sensor reading; it carries no commit, merge, or release authority.
 
-**Reviewer source of truth:** `prompts/code-review.md`.
+**Reviewer sources:** the generated contract in `prompts/code-review.md`, plus the repository-specific checks in `prompts/code-review.delta.md`.
 
 ## Commit messages
 

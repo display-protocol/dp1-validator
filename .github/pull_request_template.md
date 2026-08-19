@@ -16,7 +16,7 @@
 - [ ] I updated **docs** when behavior, flags, env vars, or JSON output shapes changed (`docs/cli_design.md`, and `docs/architecture.md` if package boundaries changed).
 - [ ] Tests cover new logic or regressions where practical.
 - [ ] DP-1 / **dp1-go** semantics (validation, signing, canonicalization) are unchanged unless explicitly intentional and documented.
-- [ ] **Agent review:** per `AGENTS.md`, obtain **`Verdict: accept`** from the `reviewer` sub-agent (`prompts/code-review.md`) before merge when using that workflow.
+- [ ] **Agent review:** for a non-trivial change, run the fresh-context reviewer (`prompts/code-review.md` plus `prompts/code-review.delta.md`) and record the disposition of any material findings.
 
 ## Spec and compatibility
 
