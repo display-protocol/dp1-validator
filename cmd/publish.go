@@ -13,7 +13,7 @@ import (
 	"github.com/display-protocol/dp1-cli/internal/output"
 )
 
-var publishFeedURL, publishAPIKey string
+var publishFeedURL string
 
 var playlistPublishCmd = &cobra.Command{
 	Use:   "publish <source>",
@@ -39,7 +39,6 @@ var groupPublishCmd = &cobra.Command{
 func init() {
 	for _, c := range []*cobra.Command{playlistPublishCmd, channelPublishCmd, groupPublishCmd} {
 		c.Flags().StringVar(&publishFeedURL, "feed-url", "", "Feed base URL (overrides "+feed.EnvURL+" and config feed.url)")
-		c.Flags().StringVar(&publishAPIKey, "api-key", "", "Bearer token for Authorization (overrides "+feed.EnvAPIKey+" and config feed.api_key); optional if the server accepts signature-only auth")
 	}
 
 	playlistCmd.AddCommand(playlistPublishCmd)
@@ -84,14 +83,14 @@ func runPublish(cmd *cobra.Command, source, commandName, resourceLabel string, p
 		output.PrintError(jsonOut, output.ErrorReport{Command: commandName, Error: err.Error()})
 		return errPrinted
 	}
-	base, key, err := feed.ResolveCredentials(publishFeedURL, publishAPIKey, cfg.Feed)
+	base, err := feed.ResolveBaseURL(publishFeedURL, cfg.Feed)
 	if err != nil {
 		output.PrintError(jsonOut, output.ErrorReport{Command: commandName, Error: err.Error()})
 		return errPrinted
 	}
 
 	client := feed.NewClient()
-	status, respBody, err := client.Create(cmd.Context(), base, path, key, data)
+	status, respBody, err := client.Create(cmd.Context(), base, path, data)
 	if err != nil {
 		output.PrintError(jsonOut, output.ErrorReport{Command: commandName, Error: err.Error()})
 		return errPrinted

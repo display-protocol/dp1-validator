@@ -20,7 +20,7 @@
 - **Path:** `~/.dp1/config.yaml` (see `dp1 config path`).
 - **Initialization:** `dp1 init` creates `~/.dp1` and writes the default file if missing.
 - **Keys writable via `dp1 config set`:**  
-  `signing.private_key`, `signing.public_key`, `feed.url`, `feed.api_key`, `defaults.output_format` (`human` or `json`).
+  `signing.private_key`, `signing.public_key`, `feed.url`, `defaults.output_format` (`human` or `json`).
 - **View merged config:** `dp1 config show` (defaults applied for missing fields). Human mode prints YAML; **`--json`** emits **`ConfigShowOK`** (see JSON shapes).
 
 ---
@@ -31,9 +31,8 @@
 | -------- | -------- |
 | **`DP1_PRIVATE_KEY`** | Hex Ed25519 private key (seed or expanded) for `sign` subcommands when `--private-key` and config are unset. |
 | **`DP1_FEED_URL`** | Base URL for `publish` when `--feed-url` and `feed.url` are unset (non-empty flag wins). |
-| **`DP1_FEED_API_KEY`** | Bearer token for `publish` when `--api-key` and `feed.api_key` are unset (optional if the server accepts signature-only creates). |
 
-Precedence for feed credentials is implemented in `internal/feed.ResolveCredentials`: **flag → env → config** (URL must be non-empty after resolution).
+Precedence for the feed URL is implemented in `internal/feed.ResolveBaseURL`: **flag → env → config** (URL must be non-empty after resolution). Published documents are authenticated by their embedded signature, so no API key is sent.
 
 ---
 
@@ -104,7 +103,7 @@ Unsupported URL schemes are rejected explicitly.
   | group | `/api/v1/playlist-groups` |
   | channel | `/api/v1/channels` |
 
-- **`--feed-url`**, **`--api-key`:** override env/config for this invocation.
+- **`--feed-url`:** override env/config for this invocation.
 - Success when HTTP status is **`201 Created`**; the CLI prints the response body (pretty-printed in human mode when valid JSON).
 - JSON success: **`PublishOK`** (`ok`, `resource`, `feed`, `statusCode`, `response`).
 
@@ -134,7 +133,7 @@ Types are defined in `internal/output`:
 - **`ValidateOK`:** `ok`, `resource`, optional `dpVersion` / `version`, `id`, `title`, `unsignedDraft`, `message`.
 - **`VerifyOK`:** `ok`, `resource`, optional `mode`, `message`, `pubkeyMatch`.
 - **`PublishOK`:** `ok`, `resource`, `feed`, `statusCode`, `response` (raw JSON from server).
-- **`ConfigShowOK`:** `ok`, `signing` (`private_key`, `public_key`), `feed` (`url`, `api_key`), `defaults` (`output_format`) — merged view, same keys as `config.yaml`.
+- **`ConfigShowOK`:** `ok`, `signing` (`private_key`, `public_key`), `feed` (`url`), `defaults` (`output_format`) — merged view, same keys as `config.yaml`.
 - **`ErrorReport`:** `ok: false`, `command`, `error` (and optional `resource` when set by callers).
 
 ---

@@ -46,11 +46,10 @@ Machine-readable output:
 ./dp1 playlist validate ./playlist.json --json
 ```
 
-Publish a validated document to a feed (URL and API key from flags, env, or `~/.dp1/config.yaml`):
+Publish a validated document to a feed (URL from flag, env, or `~/.dp1/config.yaml`; documents are authenticated by their embedded signature):
 
 ```bash
 export DP1_FEED_URL="https://your-feed.example"
-export DP1_FEED_API_KEY="your-api-key"
 ./dp1 playlist publish ./playlist.json
 ```
 

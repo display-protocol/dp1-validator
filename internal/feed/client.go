@@ -14,10 +14,9 @@ import (
 	"github.com/display-protocol/dp1-cli/internal/config"
 )
 
-// Well-known environment variables for feed credentials (optional flags override these).
+// Well-known environment variable for the feed base URL (an optional flag overrides it).
 const (
-	EnvURL    = "DP1_FEED_URL"
-	EnvAPIKey = "DP1_FEED_API_KEY"
+	EnvURL = "DP1_FEED_URL"
 )
 
 // Resource is a POST /api/v1/{resource} create target.
@@ -29,25 +28,20 @@ const (
 	Channel       Resource = "channels"
 )
 
-// ResolveCredentials returns base URL and API key using:
+// ResolveBaseURL returns the feed base URL using:
 // non-empty flag → env → config (feed package does not apply URL defaults; use config.Load after merge).
-func ResolveCredentials(urlFlag, keyFlag string, feedCfg config.FeedCfg) (baseURL, apiKey string, err error) {
+func ResolveBaseURL(urlFlag string, feedCfg config.FeedCfg) (baseURL string, err error) {
 	base := firstNonEmpty(
 		strings.TrimSpace(urlFlag),
 		strings.TrimSpace(os.Getenv(EnvURL)),
 		strings.TrimSpace(feedCfg.URL),
 	)
 	if base == "" {
-		return "", "", fmt.Errorf("feed URL missing: use --feed-url, %s, or config key feed.url", EnvURL)
+		return "", fmt.Errorf("feed URL missing: use --feed-url, %s, or config key feed.url", EnvURL)
 	}
 	base = strings.TrimSpace(base)
 	base = strings.TrimRight(base, "/")
-	key := firstNonEmpty(
-		strings.TrimSpace(keyFlag),
-		strings.TrimSpace(os.Getenv(EnvAPIKey)),
-		strings.TrimSpace(feedCfg.APIKey),
-	)
-	return base, key, nil
+	return base, nil
 }
 
 func firstNonEmpty(ss ...string) string {
@@ -71,8 +65,8 @@ func NewClient() *Client {
 	}
 }
 
-// Create POSTs document to /api/v1/{resource}. When apiKey is non-empty, Authorization: Bearer is set.
-func (c *Client) Create(ctx context.Context, baseURL string, res Resource, apiKey string, document []byte) (statusCode int, respBody []byte, err error) {
+// Create POSTs document to /api/v1/{resource}.
+func (c *Client) Create(ctx context.Context, baseURL string, res Resource, document []byte) (statusCode int, respBody []byte, err error) {
 	if c == nil || c.HTTP == nil {
 		c = NewClient()
 	}
@@ -84,9 +78,6 @@ func (c *Client) Create(ctx context.Context, baseURL string, res Resource, apiKe
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", "dp1-cli/1.0")
-	if apiKey != "" {
-		req.Header.Set("Authorization", "Bearer "+apiKey)
-	}
 
 	resp, err := c.HTTP.Do(req)
 	if err != nil {

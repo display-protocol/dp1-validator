@@ -97,7 +97,6 @@ func resetCLIState(t *testing.T) {
 		}
 		fl := c.Flags()
 		_ = fl.Set("feed-url", "")
-		_ = fl.Set("api-key", "")
 	}
 }
 
