@@ -30,7 +30,7 @@ See the [main README](../README.md) for install, config (`~/.dp1/config.yaml`), 
 
 ## Minimal first run
 
-1) Save a minimal playlist as `playlist.json`:
+**Step 1 — Save a minimal playlist as `playlist.json`:**
 
 ```json
 {
@@ -60,7 +60,7 @@ See the [main README](../README.md) for install, config (`~/.dp1/config.yaml`), 
 }
 ```
 
-2) Install and validate (requires [Go](https://go.dev/dl/) 1.24+):
+**Step 2 — Install and validate** (requires [Go](https://go.dev/dl/) 1.24+):
 
 ```bash
 go install github.com/display-protocol/dp1-cli@latest
