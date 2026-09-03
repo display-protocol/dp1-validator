@@ -39,7 +39,7 @@ Operator → dp1-cli → dp1-go (validate / sign / verify)
 ## Dependency direction
 
 - **`cmd` →** (`config`, `feed`, `input`, `output`, `create`, `verify`, `jsonsign`, `signkey`, …).
-- **`internal/feed` →** `config` (for default URL/key resolution only).
+- **`internal/feed` →** `config` (for default URL resolution only).
 - **`internal/signkey` →** `config` (cached load for private key fallback).
 - **Avoid cycles:** keep shared structs in small packages (`output`, `config`) rather than importing `cmd` from libraries.
 

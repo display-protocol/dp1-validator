@@ -9,7 +9,6 @@ useDefault = true
 [allowlist]
 description = "Dev and documentation placeholders (not production secrets)"
 regexes = [
-	'''^your-api-key$''',
 	'''^0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef$''',
 	# Documented CLI/env name (see docs/cli_design.md), not a secret literal.
 	'''^DP1_PRIVATE_KEY$''',
