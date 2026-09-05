@@ -155,8 +155,6 @@ func applyConfigMutation(cfg *config.Config, key string, val string) error {
 		cfg.Signing.PublicKey = strings.TrimSpace(val)
 	case "feed.url":
 		cfg.Feed.URL = strings.TrimSpace(val)
-	case "feed.api_key":
-		cfg.Feed.APIKey = strings.TrimSpace(val)
 	case "defaults.output_format":
 		v := strings.TrimSpace(val)
 		if v != "human" && v != "json" {
@@ -164,7 +162,7 @@ func applyConfigMutation(cfg *config.Config, key string, val string) error {
 		}
 		cfg.Defaults.OutputFormat = v
 	default:
-		return fmt.Errorf(`unknown key %q (supported: signing.private_key, signing.public_key, feed.url, feed.api_key, defaults.output_format)`, key)
+		return fmt.Errorf(`unknown key %q (supported: signing.private_key, signing.public_key, feed.url, defaults.output_format)`, key)
 	}
 	return nil
 }
@@ -177,8 +175,6 @@ func peekConfig(cfg config.Config, key string) (string, bool) {
 		return cfg.Signing.PublicKey, true
 	case "feed.url":
 		return cfg.Feed.URL, true
-	case "feed.api_key":
-		return cfg.Feed.APIKey, true
 	case "defaults.output_format":
 		return cfg.Defaults.OutputFormat, true
 	default:

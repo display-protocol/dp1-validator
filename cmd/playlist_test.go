@@ -83,7 +83,7 @@ func TestPlaylist_publish_registersWithFlags(t *testing.T) {
 		t.Fatalf("should document <source>: %q", c.Use)
 	}
 	fl := c.Flags()
-	if fl.Lookup("feed-url") == nil || fl.Lookup("api-key") == nil {
-		t.Fatal("expected feed-url and api-key flags")
+	if fl.Lookup("feed-url") == nil {
+		t.Fatal("expected feed-url flag")
 	}
 }

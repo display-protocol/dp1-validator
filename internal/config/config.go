@@ -22,8 +22,7 @@ type SigningCfg struct {
 }
 
 type FeedCfg struct {
-	URL    string `yaml:"url,omitempty" json:"url,omitempty"`
-	APIKey string `yaml:"api_key,omitempty" json:"api_key,omitempty"`
+	URL string `yaml:"url,omitempty" json:"url,omitempty"`
 }
 
 type DefaultsCfg struct {

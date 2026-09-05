@@ -26,7 +26,7 @@ alwaysApply: true
 ## Configuration
 
 - File: `~/.dp1/config.yaml`; subcommands `dp1 config …`, `dp1 init`.
-- Env: `DP1_PRIVATE_KEY`, `DP1_FEED_URL`, `DP1_FEED_API_KEY` (precedence vs flags documented in `docs/cli_design.md`).
+- Env: `DP1_PRIVATE_KEY`, `DP1_FEED_URL` (precedence vs flags documented in `docs/cli_design.md`).
 
 ## Input sources
 

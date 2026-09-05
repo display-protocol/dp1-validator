@@ -82,7 +82,7 @@ func TestSave_roundTrip(t *testing.T) {
 
 	cfg := Config{
 		Signing: SigningCfg{PrivateKey: "deadbeef", PublicKey: "00"},
-		Feed:    FeedCfg{URL: "https://example.com/feed", APIKey: "k"},
+		Feed:    FeedCfg{URL: "https://example.com/feed"},
 		Defaults: DefaultsCfg{
 			OutputFormat: "json",
 		},
@@ -96,7 +96,6 @@ func TestSave_roundTrip(t *testing.T) {
 	}
 	if got.Signing.PrivateKey != cfg.Signing.PrivateKey ||
 		got.Feed.URL != cfg.Feed.URL ||
-		got.Feed.APIKey != cfg.Feed.APIKey ||
 		got.Defaults.OutputFormat != cfg.Defaults.OutputFormat {
 		t.Fatalf("round trip mismatch: %+v vs %+v", got, cfg)
 	}

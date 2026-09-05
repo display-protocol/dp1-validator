@@ -81,7 +81,6 @@ The CLI reads **`~/.dp1/config.yaml`**. For local runs you can rely on env inste
 | -------- | ------- |
 | `DP1_PRIVATE_KEY` | Hex Ed25519 key for `sign` commands |
 | `DP1_FEED_URL` | Feed base URL for `publish` |
-| `DP1_FEED_API_KEY` | Bearer token for `publish` |
 
 See [docs/cli_design.md](docs/cli_design.md) for precedence (flags override env override config).
 

@@ -16,8 +16,8 @@ Operator → dp1-cli → dp1-go (validate / sign / verify)
 | Area | Packages | Role |
 | ---- | -------- | ---- |
 | **Entry** | `main`, `cmd` | Cobra commands, flags, wiring; no business rules beyond orchestration. |
-| **Configuration** | `internal/config` | `~/.dp1/config.yaml`: signing keys, default feed URL/API key, output defaults. |
-| **Feed client** | `internal/feed` | Minimal HTTP client: resolve credentials, `POST /api/v1/{playlists,playlist-groups,channels}`, map error bodies. |
+| **Configuration** | `internal/config` | `~/.dp1/config.yaml`: signing keys, default feed URL, output defaults. |
+| **Feed client** | `internal/feed` | Minimal HTTP client: resolve base URL, `POST /api/v1/{playlists,playlist-groups,channels}`, map error bodies. |
 | **Input** | `internal/input` | Load JSON from file path, `http(s)` URL (GET uses bounded timeout and honors command cancellation), stdin (`-`), or inline base64. |
 | **Output** | `internal/output` | Human-readable vs machine JSON for success and error reporting. |
 | **Signing helpers** | `internal/jsonsign`, `internal/signkey` | Add or refresh multi-signatures (same **kid**/**role** replaces an existing entry); preserve unknown fields; resolve private key (flag → env → config). |
@@ -39,7 +39,7 @@ Operator → dp1-cli → dp1-go (validate / sign / verify)
 ## Dependency direction
 
 - **`cmd` →** (`config`, `feed`, `input`, `output`, `create`, `verify`, `jsonsign`, `signkey`, …).
-- **`internal/feed` →** `config` (for default URL/key resolution only).
+- **`internal/feed` →** `config` (for default URL resolution only).
 - **`internal/signkey` →** `config` (cached load for private key fallback).
 - **Avoid cycles:** keep shared structs in small packages (`output`, `config`) rather than importing `cmd` from libraries.
 
@@ -50,7 +50,7 @@ Operator → dp1-cli → dp1-go (validate / sign / verify)
 - **Config directory:** `~/.dp1/` (mode `0700` when created). **`dp1 init`** ensures the directory and writes `config.yaml` if missing.
 - **Defaults:** when keys are absent in the file, `internal/config` merges defaults (including a stock `feed.url` for convenience—override for your deployment).
 - **Private key resolution (signing):** `--private-key` flag → `DP1_PRIVATE_KEY` → `signing.private_key` in config. See [`cli_design.md`](cli_design.md).
-- **Feed URL / API key (publish):** `--feed-url` / `--api-key` → `DP1_FEED_URL` / `DP1_FEED_API_KEY` → `feed.url` / `feed.api_key` in config.
+- **Feed URL (publish):** `--feed-url` → `DP1_FEED_URL` → `feed.url` in config.
 
 ---
 

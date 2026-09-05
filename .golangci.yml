@@ -38,7 +38,7 @@ linters:
         - G304
         # Draft JSON and tests use group-w readable temp files.
         - G306
-        # Constant env var names (e.g. DP1_FEED_API_KEY) trigger false positives.
+        # Constant env var names (e.g. DP1_FEED_URL) trigger false positives.
         - G101
     misspell:
       locale: US

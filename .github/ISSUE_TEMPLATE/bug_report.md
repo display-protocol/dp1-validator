@@ -30,7 +30,7 @@ assignees: ""
 
 <!-- Optional: redact secrets. Note if you use ~/.dp1/config.yaml, env vars, or flags. -->
 
-- `DP1_FEED_URL` / `DP1_FEED_API_KEY`: (set? yes/no)
+- `DP1_FEED_URL`: (set? yes/no)
 - `DP1_PRIVATE_KEY`: (set? yes/no)
 
 ## Additional context

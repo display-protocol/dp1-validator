@@ -27,7 +27,7 @@ Operator → dp1-cli → dp1-go (validate / sign / verify)
 | ---- | -------- | ---- |
 | **Entry** | `main`, `cmd` | Cobra commands, flags, wiring. |
 | **Configuration** | `internal/config` | `~/.dp1/config.yaml`, defaults, cache invalidation. |
-| **Feed client** | `internal/feed` | Credentials resolution; `POST` to `/api/v1/{resource}`; parse API error JSON. |
+| **Feed client** | `internal/feed` | Base URL resolution; `POST` to `/api/v1/{resource}`; parse API error JSON. |
 | **Input** | `internal/input` | JSON from file, URL, stdin, base64. |
 | **Output** | `internal/output` | Human vs `--json` success and error shapes. |
 | **Signing** | `internal/jsonsign`, `internal/signkey` | Add or refresh signatures (same kid/role replaces); resolve private key (flag → env → config). |
@@ -44,7 +44,7 @@ Operator → dp1-cli → dp1-go (validate / sign / verify)
 ## Dependency direction
 
 - `cmd` → `internal/*` → (dp1-go, stdlib, third-party).
-- `internal/feed` may depend on `internal/config` for URL/key defaults.
+- `internal/feed` may depend on `internal/config` for the feed URL default.
 - Avoid cycles; do not import `cmd` from libraries.
 
 ## Configuration and credentials

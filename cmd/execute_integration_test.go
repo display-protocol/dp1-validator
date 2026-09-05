@@ -373,14 +373,14 @@ func TestExecute_playlistPublish_postsToFeed(t *testing.T) {
 	}
 
 	root.SetOut(io.Discard)
-	root.SetArgs([]string{"--json", "playlist", "publish", outPath, "--feed-url", srv.URL, "--api-key", "k"})
+	root.SetArgs([]string{"--json", "playlist", "publish", outPath, "--feed-url", srv.URL})
 	if err := root.Execute(); err != nil {
 		t.Fatal(err)
 	}
 	if gotPath != "/api/v1/playlists" {
 		t.Fatalf("request path: %s", gotPath)
 	}
-	if gotAuth != "Bearer k" {
-		t.Fatalf("Authorization: %q", gotAuth)
+	if gotAuth != "" {
+		t.Fatalf("unexpected Authorization: %q", gotAuth)
 	}
 }
