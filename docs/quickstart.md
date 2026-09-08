@@ -24,7 +24,7 @@ dp1-cli delegates validation and signature semantics to **dp1-go**. Other tools 
 
 - **Validate** playlist, playlist-group, and channel JSON against DP-1 rules.
 - **Sign** and **verify** documents (Ed25519, per dp1-go).
-- **Publish** to a compatible feed API (`POST` to `/api/v1/...` paths), when you configure URL and credentials.
+- **Publish** to a compatible feed API (`POST` to `/api/v1/...` paths), once you configure the feed URL. The document's embedded signature authenticates the request; the feed uses no API key.
 
 See the [main README](../README.md) for install, config (`~/.dp1/config.yaml`), and environment variables.
 
