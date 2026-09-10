@@ -2,7 +2,7 @@
 
 This document is for people working on dp1-cli itself: layout, tooling, and how to verify changes.
 
-**Coding agents:** see [AGENTS.md](AGENTS.md), [`.cursor/rules/`](.cursor/rules/), [`.cursor/agents/reviewer.md`](.cursor/agents/reviewer.md), and [`prompts/code-review.md`](prompts/code-review.md).
+**Coding agents:** see [AGENTS.md](AGENTS.md), [`.cursor/rules/`](.cursor/rules/), [`.cursor/agents/reviewer.md`](.cursor/agents/reviewer.md), [`prompts/code-review.md`](prompts/code-review.md), and [`prompts/code-review.delta.md`](prompts/code-review.delta.md).
 
 ## Prerequisites
 

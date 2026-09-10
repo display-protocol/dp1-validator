@@ -4,7 +4,7 @@ alwaysApply: true
 
 # Review workflow
 
-When implementation is complete and **`make check`** is green, run a review loop until the reviewer qualifies the change.
+For a non-trivial change, run one fresh-context review after implementation and **`make check`** are complete.
 
 1. Produce a compact handoff:
    - goal
@@ -13,7 +13,7 @@ When implementation is complete and **`make check`** is green, run a review loop
    - checks run (`make check` and any extra commands)
    - unresolved assumptions
 2. Invoke the **`reviewer`** sub-agent (see `.cursor/agents/reviewer.md`) with the handoff, diff, and relevant outputs.
-3. If the verdict is `revise`, address findings and rerun the loop.
-4. Do not commit, push, or open a PR before **`Verdict: accept`**.
+3. The named human change owner decides how to disposition each finding.
+4. Treat the verdict as a sensor reading; it carries no commit, merge, or release authority.
 
-Review posture and output format: `prompts/code-review.md`.
+Review posture and output format: `prompts/code-review.md`. Apply the repository-specific checks in `prompts/code-review.delta.md` without weakening the generated contract.
